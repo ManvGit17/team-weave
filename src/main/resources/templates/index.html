@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Student Management System</title>
+</head>
+
+<body>
+
+<h2>Student Registration Form</h2>
+
+<form th:action="@{/save}" th:object="${studentForm}" method="post">
+
+    <label>Name:</label>
+    <input type="text" th:field="*{name}" required /><br><br>
+
+    <label>Email:</label>
+    <input type="email" th:field="*{email}" required /><br><br>
+
+    <label>Course:</label>
+    <input type="text" th:field="*{course}" required /><br><br>
+
+    <button type="submit">Add Student</button>
+
+</form>
+
+<hr>
+
+<h2>Registered Students</h2>
+
+<table border="1">
+
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Email</th>
+    <th>Course</th>
+</tr>
+
+<tr th:each="studentObj : ${studentList}">
+    <td th:text="${studentObj.id}"></td>
+    <td th:text="${studentObj.name}"></td>
+    <td th:text="${studentObj.email}"></td>
+    <td th:text="${studentObj.course}"></td>
+</tr>
+
+</table>
+
+</body>
+</html>
