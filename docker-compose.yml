@@ -1,0 +1,25 @@
+# Local PostgreSQL for development and tests.
+#
+#   docker compose up -d        start the database
+#   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   run the app (seeds data)
+#   ./mvnw test                 run the tests against this database
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: teamweave
+      POSTGRES_USER: teamweave
+      POSTGRES_PASSWORD: teamweave
+    ports:
+      - "5433:5432"
+    volumes:
+      - teamweave-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teamweave -d teamweave"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  teamweave-db:
