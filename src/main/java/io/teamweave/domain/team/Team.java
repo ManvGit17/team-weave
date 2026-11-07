@@ -59,6 +59,7 @@ public class Team {
 
     // -- Membership --------------------------------------------------------
     public void addMember(Student student, Role role) {
+        requireMembershipChanges();
         members.add(new TeamMember(student, role));
         notifyChange("added " + student.getName());
     }
@@ -68,6 +69,7 @@ public class Team {
     }
 
     public boolean removeMember(Student student) {
+        requireMembershipChanges();
         boolean removed = members.removeIf(m -> sameStudent(m.student(), student));
         if (removed) {
             notifyChange("removed " + student.getName());
@@ -99,6 +101,13 @@ public class Team {
     private void transition(TeamState next, String change) {
         this.state = next;
         notifyChange(change);
+    }
+
+    /** The State decides whether membership may change (only while forming). */
+    private void requireMembershipChanges() {
+        if (!state.allowsMembershipChanges()) {
+            throw new IllegalTransitionException("change the members of", state.label());
+        }
     }
 
     private static boolean sameStudent(Student a, Student b) {

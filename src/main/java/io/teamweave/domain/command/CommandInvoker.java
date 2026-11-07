@@ -26,21 +26,25 @@ public class CommandInvoker {
         return !redoStack.isEmpty();
     }
 
+    /** Undo the latest command. If it fails, the history is left untouched. */
     public void undo() {
         if (undoStack.isEmpty()) {
             return;
         }
-        Command command = undoStack.pop();
+        Command command = undoStack.peek();
         command.undo();
+        undoStack.pop();
         redoStack.push(command);
     }
 
+    /** Redo the latest undone command. If it fails, the history is left untouched. */
     public void redo() {
         if (redoStack.isEmpty()) {
             return;
         }
-        Command command = redoStack.pop();
+        Command command = redoStack.peek();
         command.execute();
+        redoStack.pop();
         undoStack.push(command);
     }
 

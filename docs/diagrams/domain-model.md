@@ -178,6 +178,7 @@ classDiagram
   class TeamState {
     <<interface>>
     +activate()
+    +allowsMembershipChanges()
     +isTerminal()
     +label()
     +lock()

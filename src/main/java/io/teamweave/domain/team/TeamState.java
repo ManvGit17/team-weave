@@ -32,6 +32,11 @@ public sealed interface TeamState
         return false;
     }
 
+    /** Whether students may still join or leave a team in this state. */
+    default boolean allowsMembershipChanges() {
+        return false;
+    }
+
     private IllegalTransitionException illegal(String action) {
         return new IllegalTransitionException(action, label());
     }
@@ -45,6 +50,11 @@ public sealed interface TeamState
         @Override
         public TeamState lock() {
             return new Locked();
+        }
+
+        @Override
+        public boolean allowsMembershipChanges() {
+            return true;
         }
     }
 
