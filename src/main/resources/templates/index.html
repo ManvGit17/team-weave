@@ -1,49 +1,68 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>teamweave — students</title>
-</head>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Students')}"></head>
 <body>
+<header th:replace="~{fragments/layout :: nav('students')}"></header>
 
-<h1>teamweave</h1>
-<p>Students available for team formation.</p>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Students</h1>
+            <p>The people available for team formation, with the skills and roles the engine matches on.</p>
+        </div>
+        <a class="btn" th:href="@{/formation}">Form teams →</a>
+    </div>
 
-<h2>Add a student</h2>
-<form th:action="@{/students}" th:object="${studentForm}" method="post">
-    <label>Name: <input type="text" th:field="*{name}"/></label>
-    <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
-    <br/>
-    <label>Email: <input type="email" th:field="*{email}"/></label>
-    <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
-    <br/>
-    <button type="submit">Add student</button>
-</form>
+    <div class="split">
+        <section class="card">
+            <h2>Add a student</h2>
+            <form th:action="@{/students}" th:object="${studentForm}" method="post" novalidate>
+                <label class="field"><span>Name</span>
+                    <input type="text" th:field="*{name}" autocomplete="off"/>
+                    <span class="error-text" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </label>
+                <label class="field"><span>Email</span>
+                    <input type="email" th:field="*{email}" autocomplete="off"/>
+                    <span class="error-text" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                </label>
+                <button class="btn" type="submit">Add student</button>
+            </form>
+        </section>
 
-<hr/>
+        <section class="card">
+            <h2>Roster <span class="muted small" th:text="'(' + ${#lists.size(students)} + ')'"></span></h2>
+            <table class="roster">
+                <thead>
+                <tr><th>Student</th><th>Skills</th><th>Wants to be</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="student : ${students}">
+                    <td class="who">
+                        <strong th:text="${student.name}">Name</strong>
+                        <span th:text="${student.email}">email</span>
+                    </td>
+                    <td>
+                        <span class="chip" th:each="rating : ${student.skills}">
+                            <span th:text="${rating.skill}">skill</span>
+                            <span class="dots" th:text="${#strings.repeat('●', rating.level)}"
+                                  th:title="${'level ' + rating.level + ' of 5'}">●●●</span>
+                        </span>
+                        <span class="muted small" th:if="${student.skills.isEmpty()}">—</span>
+                    </td>
+                    <td>
+                        <span class="chip role" th:each="role : ${student.desiredRoles}" th:text="${role}">ROLE</span>
+                        <span class="muted small" th:if="${student.desiredRoles.isEmpty()}">—</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(students)}">
+                    <td colspan="3" class="empty">No students yet. Add one, or run with the <code>dev</code> profile to seed a sample cohort.</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
 
-<h2>Roster</h2>
-<table border="1">
-    <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Skills</th>
-        <th>Desired roles</th>
-    </tr>
-    <tr th:each="student : ${students}">
-        <td th:text="${student.id}"></td>
-        <td th:text="${student.name}"></td>
-        <td th:text="${student.email}"></td>
-        <td>
-            <span th:each="rating : ${student.skills}"
-                  th:text="${rating.skill + ' (' + rating.level + ')'}">skill</span>
-        </td>
-        <td>
-            <span th:each="role : ${student.desiredRoles}" th:text="${role}">role</span>
-        </td>
-    </tr>
-</table>
-
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

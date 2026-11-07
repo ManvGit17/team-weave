@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${title} + ' · teamweave'">teamweave</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+
+<header th:fragment="nav(active)" class="topbar">
+    <a class="brand" th:href="@{/}">
+        <img th:src="@{/favicon.svg}" alt=""/> <span>team<b>weave</b></span>
+    </a>
+    <nav aria-label="Main">
+        <a th:href="@{/}" th:classappend="${active == 'students'} ? 'active'">Students</a>
+        <a th:href="@{/formation}" th:classappend="${active == 'formation'} ? 'active'">Formation</a>
+        <a th:href="@{/compare}" th:classappend="${active == 'compare'} ? 'active'">Compare</a>
+        <a th:href="@{/how-its-built}" th:classappend="${active == 'how'} ? 'active'">How it's built</a>
+    </nav>
+</header>
+
+<footer th:fragment="footer" class="site">
+    teamweave — balanced project teams, with the design on show.
+    <a th:href="@{/how-its-built}">How it's built</a>
+</footer>
+
+</body>
+</html>
