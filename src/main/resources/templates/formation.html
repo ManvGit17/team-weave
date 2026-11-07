@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Formation')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav('formation')}"></header>
+
+<main>
+    <div class="banner error" th:if="${error}" th:text="${error}" role="alert">error</div>
+
+    <!-- ===================== set up a round ===================== -->
+    <th:block th:unless="${board.hasFormation()}">
+        <div class="page-head">
+            <div>
+                <h1>Form teams</h1>
+                <p>Pick a team size and a strategy, add any constraints, and teamweave proposes teams —
+                    scored, explained, and ready to adjust by hand.</p>
+            </div>
+        </div>
+
+        <form class="card" th:action="@{/formation/run}" method="post">
+            <div class="split">
+                <div>
+                    <label class="field"><span>Team size</span>
+                        <input type="number" name="teamSize" value="4" min="2" max="12"/>
+                    </label>
+                    <p class="muted small">
+                        <span th:text="${#lists.size(students)}">8</span> students will be placed.
+                    </p>
+                </div>
+                <div>
+                    <h2>Strategy</h2>
+                    <div class="choice-group">
+                        <label class="choice" th:each="name, it : ${strategies}">
+                            <input type="radio" name="strategy" th:value="${name}" th:checked="${it.first}"/>
+                            <span th:switch="${name}">
+                                <strong th:text="${name}">name</strong>
+                                <span class="muted small" th:case="'greedy-balancer'">Deals the strongest students across teams in a snake order so skill is spread evenly.</span>
+                                <span class="muted small" th:case="'preference-first'">Seats students with the peers they asked for — or who asked for them.</span>
+                                <span class="muted small" th:case="'skill-coverage'">Puts each student where they add the most new skills, for well-rounded teams.</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--line);margin:18px 0"/>
+            <h2>Constraints <span class="muted small">(optional)</span></h2>
+            <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+                <div>
+                    <p class="small" style="margin:0 0 8px;font-weight:600">Every team must cover these roles</p>
+                    <div class="chips-input">
+                        <label th:each="role : ${roles}">
+                            <input type="checkbox" name="requiredRoles" th:value="${role}"/>
+                            <span th:text="${role}">ROLE</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <p class="small" style="margin:0 0 8px;font-weight:600">Keep together</p>
+                    <div class="pair">
+                        <select name="togetherA"><option value="">—</option>
+                            <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select>
+                        <span class="muted">&amp;</span>
+                        <select name="togetherB"><option value="">—</option>
+                            <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select>
+                    </div>
+                    <p class="small" style="margin:12px 0 8px;font-weight:600">Keep apart</p>
+                    <div class="pair">
+                        <select name="apartA"><option value="">—</option>
+                            <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select>
+                        <span class="muted">&amp;</span>
+                        <select name="apartB"><option value="">—</option>
+                            <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.name}"></option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:20px"><button class="btn" type="submit">Form teams</button></div>
+        </form>
+    </th:block>
+
+    <!-- ===================== the board ===================== -->
+    <th:block th:if="${board.hasFormation()}">
+        <div class="board-bar">
+            <div>
+                <h1 style="margin:0;font-size:24px">Teams</h1>
+                <span class="muted small">Formed with <code th:text="${board.strategy()}">strategy</code> ·
+                    drag a student to another team, or use <em>Move to</em></span>
+            </div>
+            <div class="spacer"></div>
+            <form class="inline" id="undo-form" th:action="@{/formation/undo}" method="post">
+                <button class="btn ghost small" type="submit" th:disabled="${!board.canUndo()}"
+                        title="Undo (Ctrl+Z)">↶ Undo</button>
+            </form>
+            <form class="inline" id="redo-form" th:action="@{/formation/redo}" method="post">
+                <button class="btn ghost small" type="submit" th:disabled="${!board.canRedo()}"
+                        title="Redo (Ctrl+Y)">↷ Redo</button>
+            </form>
+            <form class="inline" th:action="@{/formation/reset}" method="post">
+                <button class="btn ghost small" type="submit">New formation</button>
+            </form>
+        </div>
+
+        <div class="scores" style="margin-bottom:18px" th:if="${score}">
+            <div class="score-pill lead"><small>Overall</small><b th:text="${#numbers.formatDecimal(score.overall(), 1, 3)}">0.000</b></div>
+            <div class="score-pill"><small>Skill coverage</small><b th:text="${#numbers.formatDecimal(score.skillCoverage(), 1, 3)}">0.000</b></div>
+            <div class="score-pill"><small>Preferences</small><b th:text="${#numbers.formatDecimal(score.preferenceSatisfaction(), 1, 3)}">0.000</b></div>
+            <div class="score-pill"><small>Balance</small><b th:text="${#numbers.formatDecimal(score.balance(), 1, 3)}">0.000</b></div>
+        </div>
+
+        <div class="banner warn" th:unless="${#lists.isEmpty(board.violations())}">
+            Breaks <span th:text="${#lists.size(board.violations())}">1</span> constraint(s):
+            <span th:each="v, it : ${board.violations()}"><code th:text="${v}">rule</code><span th:unless="${it.last}">, </span></span>
+        </div>
+
+        <div class="board">
+            <div class="teams">
+                <section class="card team" th:each="team : ${board.teams()}"
+                         th:with="state=${team.state().label()}, open=${team.state().allowsMembershipChanges()}">
+                    <div class="team-head">
+                        <h3 th:text="${team.name()}">Team 1</h3>
+                        <span class="badge" th:classappend="${'state-' + state}" th:text="${state}">forming</span>
+                    </div>
+
+                    <div class="team-skills">
+                        <div class="skillbar" th:each="e : ${team.skillProfile().bestLevels()}">
+                            <span th:text="${e.key}">skill</span>
+                            <span class="track"><span class="fill" th:style="'width:' + ${e.value * 20} + '%'"></span></span>
+                        </div>
+                        <p class="muted small" th:if="${team.skillProfile().bestLevels().isEmpty()}" style="margin:0">No skills recorded.</p>
+                    </div>
+
+                    <div class="dropzone" th:classappend="${open} ? '' : 'closed'"
+                         th:attr="data-dropzone=${team.name()},data-open=${open}">
+                        <div class="member" th:each="m : ${team.members()}"
+                             th:attr="draggable=${open},data-student=${m.student().id}">
+                            <div class="top">
+                                <span class="name" th:text="${m.student().name}">Name</span>
+                                <span>
+                                    <span class="chip role" th:each="r : ${m.student().desiredRoles}" th:text="${r}">ROLE</span>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="chip" th:each="rating : ${m.student().skills}">
+                                    <span th:text="${rating.skill}">skill</span>
+                                    <span class="dots" th:text="${#strings.repeat('●', rating.level)}">●●</span>
+                                </span>
+                            </div>
+                            <form class="move" th:if="${open}" th:action="@{/formation/move}" method="post">
+                                <input type="hidden" name="studentId" th:value="${m.student().id}"/>
+                                <select name="toTeam" aria-label="Move to team">
+                                    <option th:each="other : ${board.teams()}" th:unless="${other == team}"
+                                            th:value="${other.name()}" th:text="${'→ ' + other.name()}"></option>
+                                </select>
+                                <button class="btn ghost small" type="submit">Move</button>
+                            </form>
+                        </div>
+                        <p class="muted small" th:if="${team.members().isEmpty()}">Empty — drop a student here.</p>
+                    </div>
+
+                    <div class="team-foot">
+                        <span class="muted small" th:text="${team.size()} + ' members'">4 members</span>
+                        <th:block th:switch="${state}">
+                            <form th:case="'forming'" class="inline" th:action="@{/formation/teams/{t}/lock(t=${team.name()})}" method="post">
+                                <button class="btn small" type="submit">Lock team</button></form>
+                            <form th:case="'locked'" class="inline" th:action="@{/formation/teams/{t}/activate(t=${team.name()})}" method="post">
+                                <button class="btn small" type="submit">Activate</button></form>
+                            <form th:case="'active'" class="inline" th:action="@{/formation/teams/{t}/submit(t=${team.name()})}" method="post">
+                                <button class="btn small" type="submit">Mark submitted</button></form>
+                            <form th:case="'submitted'" class="inline" th:action="@{/formation/teams/{t}/review(t=${team.name()})}" method="post">
+                                <button class="btn small" type="submit">Mark reviewed</button></form>
+                            <span th:case="*" class="muted small">Lifecycle complete</span>
+                        </th:block>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="side">
+                <section class="card">
+                    <h2>Move history</h2>
+                    <ol class="history" th:unless="${#lists.isEmpty(board.history())}">
+                        <li th:each="h : ${board.history()}" th:text="${h}">move</li>
+                    </ol>
+                    <p class="muted small" th:if="${#lists.isEmpty(board.history())}" style="margin:0">
+                        No moves yet. Every move is a command you can undo
+                        (<span class="kbd">Ctrl</span> <span class="kbd">Z</span>) and redo
+                        (<span class="kbd">Ctrl</span> <span class="kbd">Y</span>).</p>
+                </section>
+                <section class="card">
+                    <h2>Activity</h2>
+                    <ul class="feed">
+                        <li th:each="a : ${board.activity()}">
+                            <time th:text="${a.time()}">12:00:00</time><span th:text="${a.text()}">event</span>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+        </div>
+
+        <details class="explain card">
+            <summary>Why the strategy placed each student</summary>
+            <table class="roster">
+                <thead><tr><th>Student</th><th>Team</th><th>Reason</th></tr></thead>
+                <tbody>
+                <tr th:each="x : ${board.explanations()}">
+                    <td th:text="${x.studentName()}">Ava</td>
+                    <td th:text="${x.teamName()}">Team 1</td>
+                    <td class="muted" th:text="${x.reason()}">reason</td>
+                </tr>
+                </tbody>
+            </table>
+        </details>
+
+        <form id="move-form" th:action="@{/formation/move}" method="post" hidden>
+            <input type="hidden" name="studentId"/>
+            <input type="hidden" name="toTeam"/>
+        </form>
+    </th:block>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<script th:src="@{/js/board.js}" defer></script>
+</body>
+</html>

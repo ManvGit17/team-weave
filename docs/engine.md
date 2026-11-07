@@ -11,8 +11,8 @@ always matches this description.
 | :-- | :-- | :-- | :-- |
 | **Strategy** | Interchangeable team-formation algorithms behind one interface. | [`MatchingStrategy`](../src/main/java/io/teamweave/domain/matching/MatchingStrategy.java) and three implementations in [`domain/matching`](../src/main/java/io/teamweave/domain/matching) | [`MatchingStrategyTest`](../src/test/java/io/teamweave/domain/matching/MatchingStrategyTest.java) |
 | **Specification** | Constraints that compose with `and`, `or` and `negate`: team size, required roles, keep-together, keep-apart. | [`Constraint`](../src/main/java/io/teamweave/domain/constraint/Constraint.java) and [`domain/constraint`](../src/main/java/io/teamweave/domain/constraint) | [`ConstraintTest`](../src/test/java/io/teamweave/domain/constraint/ConstraintTest.java) |
-| **State** | The team lifecycle — forming → locked → active → submitted → reviewed. Each state allows only its own transition; anything else throws. | [`TeamState`](../src/main/java/io/teamweave/domain/team/TeamState.java) (a sealed interface with one record per state) | [`TeamStateTest`](../src/test/java/io/teamweave/domain/team/TeamStateTest.java) |
-| **Command** | Manual moves as reversible commands, with undo, redo and a history. | [`Command`](../src/main/java/io/teamweave/domain/command/Command.java), [`MoveStudentCommand`](../src/main/java/io/teamweave/domain/command/MoveStudentCommand.java), [`CommandInvoker`](../src/main/java/io/teamweave/domain/command/CommandInvoker.java) | [`CommandTest`](../src/test/java/io/teamweave/domain/command/CommandTest.java) |
+| **State** | The team lifecycle — forming → locked → active → submitted → reviewed. Each state allows only its own transition; anything else throws. The state also decides whether membership can change: only a forming team can gain or lose members. | [`TeamState`](../src/main/java/io/teamweave/domain/team/TeamState.java) (a sealed interface with one record per state) | [`TeamStateTest`](../src/test/java/io/teamweave/domain/team/TeamStateTest.java) |
+| **Command** | Manual moves as reversible commands, with undo, redo and a history. A move checks both teams before touching either, and a failed undo or redo leaves the history intact. | [`Command`](../src/main/java/io/teamweave/domain/command/Command.java), [`MoveStudentCommand`](../src/main/java/io/teamweave/domain/command/MoveStudentCommand.java), [`CommandInvoker`](../src/main/java/io/teamweave/domain/command/CommandInvoker.java) | [`CommandTest`](../src/test/java/io/teamweave/domain/command/CommandTest.java) |
 | **Observer** | Listeners are told about every change to a team's members or state. | [`Team`](../src/main/java/io/teamweave/domain/team/Team.java) (subject), [`TeamChangeListener`](../src/main/java/io/teamweave/domain/team/TeamChangeListener.java), [`LoggingTeamListener`](../src/main/java/io/teamweave/application/LoggingTeamListener.java) | [`TeamObserverTest`](../src/test/java/io/teamweave/domain/team/TeamObserverTest.java) |
 
 ## The three strategies
@@ -65,6 +65,8 @@ What it shows:
   (`preferenceFirstHonoursAOneWayPreferenceFromAnEarlierStudent`) keeps it fixed.
 - These are greedy heuristics on a small cohort, not optimal assignments; a constraint solver is on
   the roadmap.
+- Availability and interests are recorded on every profile but **not yet used** by any strategy or
+  score. Using them is listed in [good first issues](good-first-issues.md).
 
 ## Architecture rules
 

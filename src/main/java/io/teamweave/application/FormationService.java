@@ -41,10 +41,25 @@ public class FormationService {
 
     @Transactional(readOnly = true)
     public MatchResult form(int teamSize, String strategyName, List<Constraint> constraints) {
-        Round round = new Round(loadCandidates(), teamSize, constraints);
+        return run(round(teamSize, constraints), strategyName);
+    }
+
+    /** A round over the current students, ready for any strategy. */
+    @Transactional(readOnly = true)
+    public Round round(int teamSize, List<Constraint> constraints) {
+        return new Round(loadCandidates(), teamSize, constraints);
+    }
+
+    public MatchResult run(Round round, String strategyName) {
         MatchingStrategy strategy =
             strategies.getOrDefault(strategyName, strategies.get("greedy-balancer"));
         return strategy.assign(round);
+    }
+
+    /** Look up a student among the current candidates by id. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Student> student(long id) {
+        return students.findById(id);
     }
 
     /** Run every strategy on the same round, best overall score first. */

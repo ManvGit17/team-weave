@@ -32,6 +32,18 @@ class TeamStateTest {
     }
 
     @Test
+    void membersCanChangeOnlyWhileForming() {
+        Team team = new Team("A");
+        team.addMember(io.teamweave.domain.Students.student(1, "Ava"));
+        team.lock();
+
+        assertThatThrownBy(() -> team.addMember(io.teamweave.domain.Students.student(2, "Ben")))
+            .isInstanceOf(IllegalTransitionException.class)
+            .hasMessageContaining("locked");
+        assertThat(team.size()).isEqualTo(1);
+    }
+
+    @Test
     void cannotTransitionOutOfATerminalState() {
         Team team = new Team("A");
         team.lock();

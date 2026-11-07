@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Compare')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: nav('compare')}"></header>
+
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Compare strategies</h1>
+            <p>Every strategy runs on the same round and is scored on the same three axes.
+                No strategy wins them all — that trade-off is why they are interchangeable.</p>
+        </div>
+        <form method="get" th:action="@{/compare}" style="display:flex;gap:8px;align-items:flex-end">
+            <label class="field" style="margin:0"><span>Team size</span>
+                <input type="number" name="teamSize" th:value="${teamSize}" min="2" max="12" style="width:100px"/>
+            </label>
+            <button class="btn ghost" type="submit">Rerun</button>
+        </form>
+    </div>
+
+    <div class="ranking">
+        <section class="card rank" th:each="r, it : ${results}" th:classappend="${it.first} ? 'first'">
+            <span class="place" th:text="${it.first} ? 'best overall' : '#' + ${it.count}">#1</span>
+            <h3 th:text="${r.strategy()}">strategy</h3>
+            <div class="overall" th:text="${#numbers.formatDecimal(r.score().overall(), 1, 3)}">0.000</div>
+
+            <div class="meter"><span>Skill coverage</span>
+                <span class="track"><span class="fill teal" th:style="'width:' + ${r.score().skillCoverage() * 100} + '%'"></span></span>
+                <b th:text="${#numbers.formatDecimal(r.score().skillCoverage(), 1, 2)}">0</b></div>
+            <div class="meter"><span>Preferences</span>
+                <span class="track"><span class="fill violet" th:style="'width:' + ${r.score().preferenceSatisfaction() * 100} + '%'"></span></span>
+                <b th:text="${#numbers.formatDecimal(r.score().preferenceSatisfaction(), 1, 2)}">0</b></div>
+            <div class="meter"><span>Balance</span>
+                <span class="track"><span class="fill amber" th:style="'width:' + ${r.score().balance() * 100} + '%'"></span></span>
+                <b th:text="${#numbers.formatDecimal(r.score().balance(), 1, 2)}">0</b></div>
+
+            <div class="teamlist">
+                <div th:each="t : ${r.teams()}">
+                    <strong th:text="${t.name()}">Team 1</strong>:
+                    <span class="muted" th:each="s, si : ${t.students()}" th:text="${s.name} + (${si.last} ? '' : ', ')">Ava</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <p class="muted small" style="margin-top:18px">
+        Coverage: the share of the cohort's distinct skills each team holds, averaged.
+        Preferences: the share of students with a peer preference who got a preferred teammate.
+        Balance: one minus the spread of teams' total skill strength. Overall is their mean.
+        The same comparison runs from the command line with
+        <code>./mvnw spring-boot:run -Dspring-boot.run.profiles=dev,compare</code>.
+    </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
